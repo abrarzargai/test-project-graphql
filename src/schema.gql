@@ -7,25 +7,15 @@ type Organization {
   name: String!
 }
 
-type User {
-  """Example field (placeholder)"""
-  exampleField: Int!
-}
-
 type Query {
   organizations: [Organization!]!
   organization(id: String!): Organization!
-  users: [User!]!
-  user(id: Int!): User!
 }
 
 type Mutation {
   createOrganization(createOrganizationInput: CreateOrganizationInput!): Organization!
   updateOrganization(updateOrganizationInput: UpdateOrganizationInput!): Organization!
   removeOrganization(id: String!): Organization!
-  createUser(createUserInput: CreateUserInput!): User!
-  updateUser(updateUserInput: UpdateUserInput!): User!
-  removeUser(id: Int!): User!
 }
 
 input CreateOrganizationInput {
@@ -37,15 +27,4 @@ input UpdateOrganizationInput {
   """Example field (placeholder)"""
   name: String
   id: String!
-}
-
-input CreateUserInput {
-  """Example field (placeholder)"""
-  exampleField: Int!
-}
-
-input UpdateUserInput {
-  """Example field (placeholder)"""
-  exampleField: Int
-  id: Int!
 }

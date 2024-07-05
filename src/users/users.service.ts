@@ -1,26 +1,62 @@
-import { Injectable } from '@nestjs/common';
-import { CreateUserInput } from './dto/create-user.input';
-import { UpdateUserInput } from './dto/update-user.input';
+import { HttpException, HttpStatus, Injectable, UnauthorizedException } from '@nestjs/common';
+import { InjectRepository } from '@nestjs/typeorm';
+import { Repository } from 'typeorm';
+import { SignUpInput } from './dto/sign-up.input';
+import { User } from './entities/user.entity';
+import * as bcrypt from "bcryptjs";
+import { JwtService } from "@nestjs/jwt";
+import { LoginInput } from './dto/login.input';
 
 @Injectable()
 export class UsersService {
-  create(createUserInput: CreateUserInput) {
-    return 'This action adds a new user';
+  constructor(
+    @InjectRepository(User)
+    private readonly usersRepository: Repository<User>,
+    private jwtService: JwtService
+  ) {  }
+
+  async signUp(signUpInput: SignUpInput): Promise<{ token: string }> {
+    const { password, email } = signUpInput;
+
+    if (await this.usersRepository.findOne({ where: { email } })) {
+      throw new HttpException(
+        "user with email already exist",
+        HttpStatus.BAD_REQUEST
+      );
+    }
+ 
+    const hashedPassword = await bcrypt.hash(password, 10);
+
+    const user = await this.usersRepository.save({
+      ...signUpInput,
+      password: hashedPassword,
+    });
+    
+    const token = this.jwtService.sign({ id: user?.id });
+
+    return { token };
   }
 
-  findAll() {
-    return `This action returns all users`;
-  }
+  async login(loginInput: LoginInput): Promise<{ token: string; user: User }> {
+    const { email, password } = loginInput;
 
-  findOne(id: number) {
-    return `This action returns a #${id} user`;
-  }
+    const user = await this.usersRepository.findOne({
+      where: { email },
+    });
 
-  update(id: number, updateUserInput: UpdateUserInput) {
-    return `This action updates a #${id} user`;
-  }
+    if (!user) {
+      throw new UnauthorizedException("User not found");
+    }
 
-  remove(id: number) {
-    return `This action removes a #${id} user`;
+    const isPasswordMatched = await bcrypt.compare(password, user.password);
+
+    if (!isPasswordMatched) {
+      throw new UnauthorizedException("Invalid email or password");
+    }
+
+    const token = this.jwtService.sign({ id: user.id });
+    delete user["password"];
+
+    return { token, user };
   }
 }

@@ -1,7 +1,7 @@
 import { InputType, Int, Field } from '@nestjs/graphql';
 
 @InputType()
-export class CreateUserInput {
+export class SignUpInput {
   @Field(() => String, { description: 'Example field (placeholder)' })
   email: string;
 
